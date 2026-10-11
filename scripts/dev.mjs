@@ -1,0 +1,6 @@
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname,resolve,sep } from 'node:path';
+const root=process.cwd(),port=Number(process.env.PORT)||5173;
+const types={'.html':'text/html','.css':'text/css','.js':'text/javascript','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
+createServer(async(req,res)=>{const url=new URL(req.url,'http://localhost');if(url.pathname==='/api/session'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({configured:false,signedIn:false}));return;}if(url.pathname.startsWith('/api/')){res.writeHead(503,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Local static preview: cloud backend unavailable.'}));return;}const path=resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));if(!path.startsWith(root+sep)||/\/\./.test(path.slice(root.length))){res.writeHead(403);res.end();return;}try{const data=await readFile(path);res.writeHead(200,{'Content-Type':types[extname(path)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}}).listen(port,'0.0.0.0',()=>console.log(`Preview: http://localhost:${port}`));
