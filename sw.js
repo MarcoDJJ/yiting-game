@@ -1,6 +1,6 @@
-const CACHE = 'passport-v1';
-const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/lib/content.js', '/lib/state.js', '/lib/engine.js', '/lib/games.js', '/manifest.webmanifest', '/assets/icon.svg', '/assets/icon-192.png', '/assets/icon-512.png', '/assets/italy.webp', '/assets/yiting.webp', '/assets/yiting-red.webp', '/assets/yiting-winter.webp', '/assets/marco.webp'];
-self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL))));
+const CACHE = 'passport-v2-egypt';
+const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/lib/content.js', '/lib/state.js', '/lib/engine.js', '/lib/games.js', '/lib/egypt-games.js', '/lib/i18n.js', '/lib/views.js', '/lib/icons.js', '/manifest.webmanifest', '/assets/icon.svg', '/assets/icon-192.png', '/assets/icon-512.png', '/assets/italy.webp', '/assets/egypt.webp', '/assets/yiting.webp', '/assets/yiting-red.webp', '/assets/yiting-winter.webp', '/assets/marco.webp', '/assets/yiting-egypt.webp', '/assets/yiting-burgundy.webp', '/assets/yiting-evening.webp', '/assets/marco-desert.webp', '/assets/marco-striped.webp', '/assets/marco-polo.webp'];
+self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
