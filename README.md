@@ -4,6 +4,8 @@ A personal, mobile-first travel game for Yiting and Marco. Playable chapters: **
 
 ## What is playable
 
+**Temporary demo:** `DEMO_UNLOCK_MINIGAMES = true` in `lib/content.js` opens all 17 minigames immediately, including their first stages. Later stages and finales retain normal progression. No scores, stars, coins or purchases are fabricated. To restore release progression, set that flag to `false`, bump the cache name in `sw.js`, and deploy. Actual demo play remains saved; test with a fresh passport if a completely fresh start is needed.
+
 Italia has nine different games, each with twelve stages (108 stages), plus an Italian Date Night ending:
 
 1. Snowman Mania

@@ -7,7 +7,7 @@ import {freshState,normalize,reward} from '../lib/state.js';
 const input=()=>({x:180,y:290,down:false,keys:new Set()});
 test('Egypt starts independently; driving comes before both sea games',()=>{
   const list=chaptersFor('egypt'),state=freshState();assert.deepEqual(list.map(c=>c.id),['cairo','bus','pharaoh','detour','breathe','reef','snapshots','crew','egypt-date']);
-  assert.ok(chapterUnlocked(state,getChapter('cairo')));assert.ok(!chapterUnlocked(state,getChapter('bus')));reward(state,'cairo:1',300,3);assert.ok(chapterUnlocked(state,getChapter('bus')));assert.ok(!chapterUnlocked(state,getChapter('summit')));
+  assert.ok(chapterUnlocked(state,getChapter('cairo'),false));assert.ok(!chapterUnlocked(state,getChapter('bus'),false));reward(state,'cairo:1',300,3);assert.ok(chapterUnlocked(state,getChapter('bus'),false));assert.ok(!chapterUnlocked(state,getChapter('summit'),false));
 });
 test('legacy Italy progress, purchases and language survive the new world',()=>{
   const s=freshState();s.coins=420;s.owned.push('red');s.outfit='red';s.settings.language='zh-TW';reward(s,'snowman:1',300,3);reward(s,'cairo:1',350,3);const saved=normalize(JSON.parse(JSON.stringify(s)));
