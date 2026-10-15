@@ -32,19 +32,9 @@ test('reef interpolates fast drags into adjacent cells and rejects rocks',()=>{
   const g=createGame('reef',{stage:1}),a=g.pairs[0],point=p=>({x:g.left+(p.x+.5)*g.cell,y:g.top+(p.y+.5)*g.cell});g.pointer('down',point(a.start));
   const end=a.solution[2];g.pointer('move',point(end));assert.equal(a.path.length,3);for(const p of a.solution.slice(3))g.pointer('move',point(p));const last=a.path.at(-1);g.pointer('up',point(last));const b=g.pairs[1];g.pointer('down',point(b.start));const rock=[...g.rocks][0].split(',').map(Number);g.pointer('move',point({x:rock[0],y:rock[1]}));assert.equal(b.path.length,1);assert.ok(a.connected);g.update(10000);assert.equal(g.done,false);
 });
-test('Cairo bonus clears hazards without removing coins',()=>{
-  const g=createGame('cairo',{stage:1});g.items=[{x:180,y:440,kind:'poop'},{x:90,y:200,kind:'coin'}];g.action('Space');assert.equal(g.items.length,1);assert.equal(g.items[0].kind,'coin');assert.ok(g.bonus>0);g.action('Space');assert.equal(g.cooldown,13);
-});
-test('the driver loses patience and slows down after a distraction',()=>{
-  const g=createGame('detour',{stage:1});g.items=[{x:180,y:440,kind:'coffee',w:28,h:31}];g.update(.01,input());assert.equal(g.patience,82);assert.ok(g.slow>0);assert.equal(g.done,false);
-});
 test('night bus swipe, jump and slide avoid the correct obstacles',()=>{
   const g=createGame('bus',{stage:1});g.pointer('down',{x:160,y:320});g.pointer('up',{x:250,y:320});assert.equal(g.lane,2);
   g.action('ArrowUp');g.items=[{lane:2,y:405,kind:'luggage'}];g.update(.01);assert.equal(g.lives,3);g.action('ArrowDown');g.items=[{lane:2,y:405,kind:'barrier'}];g.update(.01);assert.equal(g.lives,3);
-});
-test('Marco collects air and multiple hazards only cause one hit',()=>{
-  const g=createGame('breathe',{stage:1}),i=input();i.x=95;i.down=true;g.air=25;g.items=[{x:95,y:290,kind:'bubble',w:30,h:30}];g.update(.01,i);assert.ok(g.air>50);
-  g.items=Array.from({length:3},()=>({x:95,y:290,kind:'rock',w:30,h:30}));g.update(.01,i);assert.equal(g.lives,2);
 });
 test('all photography stages can be completed using the visible green indicators',()=>{
   for(let stage=1;stage<=12;stage++){const g=createGame('snapshots',{stage}),i=input();i.down=true;

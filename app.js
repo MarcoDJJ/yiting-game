@@ -33,11 +33,11 @@ function render(){
   else if(parts[0]==='settings')content=views.settings();
   else if(parts[0]==='finale')content=views.finale(WORLD_INFO[parts[1]]?parts[1]:'italy');
   else content=views.journey();
-  app.innerHTML=views.shell(route,content);document.body.classList.toggle('reduce-motion',state.settings.reducedMotion);document.documentElement.lang=state.settings.language;document.title=T('Yiting’s Passport')+' · '+T('Our little world');updateSaveBadge();
+  app.innerHTML=views.shell(route,content);document.body.classList.toggle('is-playing',parts[0]==='play');document.body.classList.toggle('reduce-motion',state.settings.reducedMotion);document.documentElement.lang=state.settings.language;document.title=T('Yiting’s Passport')+' · '+T('Our little world');updateSaveBadge();
   if(parts[0]==='play')prepareGame(parts[1],Number(parts[2]),parts[3]==='daily');window.scrollTo({top:0,behavior:'instant'});
 }
 function prepareGame(id,stage,daily){
-  const canvas=document.querySelector('#game-canvas'),config={stage,sprite:spriteFor(state),marcoSprite:marcoSpriteFor(state),accessories:[...state.accessories],marcoOutfit:state.marcoOutfit,language:state.settings.language,seed:daily?id+':'+today():id+':'+stage};
+  const canvas=document.querySelector('#game-canvas'),config={stage,sprite:spriteFor(state),marcoSprite:marcoSpriteFor(state),accessories:[...state.accessories],marcoOutfit:state.marcoOutfit,language:state.settings.language,reducedMotion:state.settings.reducedMotion,onFeedback:(kind)=>{playNote(kind==='hit'?180:kind==='perfect'?880:620,.07);if(kind==='hit'&&state.settings.vibration&&navigator.vibrate)navigator.vibrate(30);},seed:daily?id+':'+today():id+':'+stage};
   runner=new GameRunner(canvas,id,config,status=>{
     document.querySelector('#hud-score').textContent=status.score;document.querySelector('#hud-time').textContent=status.timeless?'—':T('{n}s',{n:status.time});
     const lives=Math.max(0,Math.min(3,status.lives));document.querySelector('#hud-lives').textContent='♥ '.repeat(lives)+'♡ '.repeat(3-lives);
@@ -102,6 +102,7 @@ modalRoot.addEventListener('click',async e=>{
   else if(el.hasAttribute('data-signout')){await saveQueue;if(cloudError){toast('Cloud sync is paused. Export a backup before signing out.');return;}try{const r=await api('/api/logout',{method:'POST'});if(!r.ok)throw new Error();session={configured:true,signedIn:false};localStorage.removeItem('passport-cloud-owner');storageKey=STORAGE_KEY;state=load();cloudError=false;cloudDirty=false;closeModal();render();}catch{toast('Could not sign out. Please try again.');}}
 });
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-control]');if(b&&runner){e.preventDefault();b.setPointerCapture(e.pointerId);runner.control(b.dataset.control,true);}});
+document.addEventListener('pointercancel',e=>{const b=e.target.closest('[data-control]');if(b&&runner)runner.control(b.dataset.control,false);});
 document.addEventListener('pointerup',e=>{const b=e.target.closest('[data-control]');if(b&&runner)runner.control(b.dataset.control,false);});
 document.addEventListener('pointercancel',()=>runner?.input.keys.clear());
 document.addEventListener('keydown',e=>{if(!modalRoot.firstChild)return;if(e.key==='Escape'&&modalRoot.querySelector('[data-close]'))closeModal();if(e.key==='Tab'){const f=[...modalRoot.querySelectorAll('button:not(:disabled),input,select')],first=f[0],last=f.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}});

@@ -1,6 +1,6 @@
 # Yiting’s Passport · Our Little World
 
-A personal, mobile-first travel game for Yiting and Marco. Playable chapters: **Egypt and Italia**, version 0.2.
+A personal, mobile-first travel game for Yiting and Marco. Playable chapters: **Egypt and Italia**, version 0.3.
 
 ## What is playable
 
@@ -8,24 +8,24 @@ A personal, mobile-first travel game for Yiting and Marco. Playable chapters: **
 
 Italia has nine different games, each with twelve stages (108 stages), plus an Italian Date Night ending:
 
-1. Snowman Mania
-2. Summit Sprint
-3. **Snowbound Drive**
-4. **Escape the Castle**
-5. Row, Row, Rome
-6. Wait, Marco!
-7. Gelato Tower
-8. Mercato di Sicilia
-9. Pasta di Casa
+1. Snowman Mania: circle gestures roll three snowballs, precise dragging stacks them, then decorate.
+2. Summit Sprint: side-scrolling platform jumps, moving camera, ledges, checkpoints and animated running.
+3. **Snowbound Drive**: continuous steering on a winding mountain road, braking on ice and pushing out of snow.
+4. **Escape the Castle**: navigate rooms, collect two keys, avoid guards' sight cones, hide and open Yiting's gate.
+5. Row, Row, Rome: alternate oars in rhythm as the timing ring reaches each target.
+6. Wait, Marco!: hold the plate to focus, interrupt Marco's hungry hand, then photograph each course.
+7. Gelato Tower: choose the requested flavor, time the moving scoop and balance an increasingly tall cone.
+8. Mercato di Sicilia: read the recipe and drag the correct illustrated ingredients into a basket.
+9. Pasta di Casa: swipe to chop, circle to stir, regulate the heat and drag four distinct garnishes onto the dish.
 10. Italian Date Night
 
 Egypt has eight different games, twelve stages each, and a sunset postcard ending:
 
-1. Cairo Chaos, a street slalom with a “No, thanks!” bonus.
+1. Cairo Chaos: free movement across a small city map; collect three souvenirs, cross traffic gaps and avoid persistent sales pitches with “No, thanks!”.
 2. Midnight Bus Run, a three-lane night runner with swipe, jump, slide and a ticket to collect.
 3. Pharaoh’s Secret, a solvable mirror-light and stone-pushing puzzle.
-4. One Last Stop, the drive to Marsa Alam with coffee, cigarettes and unnecessary stops.
-5. Marco, Breathe!, swimming with an air meter and collectible bubbles.
+4. One Last Stop: follow a branching route card and refuse the driver’s extra coffee, food and photo stops before patience runs out.
+5. Marco, Breathe!: explore a scrolling reef, plan air refills at bubbles or the surface, collect three memories and return to Yiting’s boat.
 6. Turtle Trails, noncrossing turtle-to-shell path puzzles, without a timer.
 7. Sunset Snapshots, framing and timing illustrated travel photographs.
 8. Homebound Crew, meal-and-drink orders, passenger patience and turbulence.
@@ -70,7 +70,7 @@ Cloud saves protect **save data**, not the public game itself. This repository i
 
 Open the deployed URL in Safari → Share → Add to Home Screen → Open as Web App if shown. Android can add it through the browser’s install menu. The service worker caches the game shell and artwork after the first visit. Cloud saves require an internet connection. Export a backup before clearing browser data or changing device; device-local data can be removed by the browser.
 
-Controls support touch, pointer and keyboard. Platform games: arrows and Space. Boat: A and D. Driving: arrows, Space for Push/bonus. Night runner: swipes or arrows, Space also jumps. Pyramid: tap mirrors, arrows to move/push, Reset to restore the board. Turtle puzzle: drag paths, Reset to clear. Swimming: drag in two dimensions or use arrows. Photography: drag the frame, Space/Shoot to capture. Cabin: tap orders and meals/drinks, Space/Serve to deliver, D/Stow to secure the tray. Kitchen: touch actions, Space fallback. Reduced motion applies to menus, not game movement. Haptics work only on supported devices. Avatars are static illustrations; full walking/gesture sprite animations are a future art pass.
+Controls support touch, pointer and keyboard. Platform games: arrows and Space. Boat: A and D. Driving: arrows or drag to steer, hold Space to brake, tap it repeatedly to push out of snow. Night runner: swipes or arrows, Space also jumps. Pyramid: tap mirrors, arrows to move/push, Reset to restore the board. Turtle puzzle: drag paths, Reset to clear. Swimming: drag in two dimensions or use arrows. Sunset photography: drag the frame, Space/Shoot to capture. Dinner photography: hold the plate/Space to focus, tap Marco/A to interrupt him and Shoot/D to take the picture. Cabin: tap orders and meals/drinks, Space/Serve to deliver, D/Stow to secure the tray. Kitchen: touch actions, Space fallback. Reduced motion disables menu transitions and gameplay screen shake; essential game movement remains. Haptics work only on supported devices. The everyday outfits use illustrated idle, running-stride, jump, swim and cheer poses; purchased outfits retain their painted clothing through articulated limb animation. Gameplay includes animated water, drifting snow, moving oars, steam, light beams, particles and score feedback.
 
 ## Local development
 
@@ -89,8 +89,10 @@ The built-in development server is a static preview. To exercise the actual Clou
 
 - `app.js`, `style.css`: responsive game shell, routes, menus, wardrobe and cloud client.
 - `lib/content.js`: expandable world, chapter and item catalog.
-- `lib/games.js`, `lib/egypt-games.js`, `lib/engine.js`: game logic, solvable puzzle generation, canvas renderer, touch controls and pause lifecycle.
-- `lib/i18n.js`, `lib/views.js`, `lib/icons.js`: complete language catalog, pure page rendering and interface icons.
+- `lib/games.js`, `lib/egypt-games.js`, `lib/revised-games.js`: seventeen game-specific mechanics and solvable puzzle generation.
+- `lib/engine.js`, `lib/visuals.js`, `lib/game-presentation.js`, `lib/motion-frames.js`: canvas rendering, scene/prop atlases, illustrated and articulated character motion, feedback and input lifecycle.
+- `lib/game-briefs.js`: each game’s genre, objective, touch controls and three-step tutorial.
+- `lib/i18n.js`, `lib/revamp-i18n.js`, `lib/views.js`, `lib/icons.js`: complete language catalog, pure page rendering and interface icons.
 - `lib/state.js`: validated save format, economy and seeded randomness.
 - `functions/api/[[path]].js`: Cloudflare Pages auth and D1 save API.
 - `db/schema.sql`: database schema.
@@ -99,12 +101,12 @@ The built-in development server is a static preview. To exercise the actual Clou
 
 ## Art direction and generated assets
 
-Original illustrations generated with the built-in image tool and integrated into `assets/` as optimized WebP assets. Photo references stay outside this repository.
+Original illustrations generated with the built-in image tool and integrated into `assets/` as optimized WebP assets. Photo references stay outside this repository. Twelve game-specific environments, transparent ingredient/prop artwork, a supporting cast, travel vehicles and two six-pose character atlases replace generic backgrounds and static everyday avatars. Atlas generation prompts and exact frame maps are documented in [`docs/art-v3-prompts.md`](docs/art-v3-prompts.md).
 
 Italy background brief: cozy watercolor/gouache panorama from snowy mountains and chalet through a stone castle and terracotta village to Rome-inspired architecture and blue water, warm ivory/green/coral palette, no labels or characters. This is an imaginative game landscape, not a geographic map.
 
-Avatar brief: consistent full-body chibi sprites based on supplied references. Yiting has cream knit and jeans, red turtleneck, blue/yellow winter sweater, beige dress with headscarf, burgundy dress and white evening dress. Marco is always completely clean-shaven, with white knitwear, desert linen, striped shirt and white polo variants. Transparent WebP assets stay in `assets/`. Egypt panorama and outfit prompts are in [`docs/egypt-art-prompts.md`](docs/egypt-art-prompts.md); original Italy prompts are in [`docs/art-prompts.md`](docs/art-prompts.md).
+Avatar brief: consistent full-body chibi sprites based on supplied references. Yiting has cream knit and jeans, red turtleneck, blue/yellow winter sweater, beige dress with headscarf, burgundy dress and white evening dress. Marco is always completely clean-shaven, with white knitwear, blue winter jacket, smart dinner blazer, desert linen, striped shirt and white polo variants. Transparent WebP assets stay in `assets/`. Egypt panorama and outfit prompts are in [`docs/egypt-art-prompts.md`](docs/egypt-art-prompts.md); original Italy prompts are in [`docs/art-prompts.md`](docs/art-prompts.md).
 
 ## Scope and next milestones
 
-This is a working personal game, not a finished commercial release. 206 stages/variations and daily challenges do not guarantee months of unique authored content. Longer lifespan comes from replay mastery and genuinely new worlds. Unit tests cover progression, save compatibility, every pyramid/turtle puzzle, cabin orders, photograph timing and translation completeness. Native canvas rendering is checked as a smoke test; browser/Safari testing was unavailable in this development environment, and no iPhone playtest is claimed. Real-device touch checks, difficulty balancing, private comic integration and fuller sprite animations remain important before the gift.
+This is a working personal game, not a finished commercial release. 206 stages/variations and daily challenges do not guarantee months of unique authored content. Longer lifespan comes from replay mastery and genuinely new worlds. Automated tests cover progression, save compatibility, translations and successful input-driven routes through all twelve stages of all seventeen minigames, as well as incorrect actions, repeat-reward protection and cloud-save behavior. Native canvas rendering is checked as a smoke test; browser/Safari testing was unavailable in this development environment, and no iPhone playtest is claimed. Real-device touch checks, difficulty balancing, private comic integration and additional authored stage layouts remain important before the gift.
