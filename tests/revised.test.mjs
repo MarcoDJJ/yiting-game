@@ -56,11 +56,20 @@ test('all four cooking phases are completed with slice, stir, heat and plating i
   }
 });
 test('all road trips can follow their route and refuse every stop',()=>{
-  for(let stage=1;stage<=12;stage++){const g=createGame('detour',{stage});for(let n=0;n<8000&&!g.done;n++){g.action(g.route[g.junction]==='left'?'KeyA':'KeyD');if(g.temptation)g.pointer('down',{x:180,y:300});g.update(1/60,input());}assert.ok(g.won,'detour '+stage);assert.equal(g.patience,100);}
+  for(let stage=1;stage<=24;stage++){const g=createGame('detour',{stage});for(let n=0;n<8000&&!g.done;n++){g.action(g.route[g.junction]==='left'?'KeyA':'KeyD');if(g.temptation)g.pointer('down',{x:180,y:300});g.update(1/60,input());}assert.ok(g.won,'detour '+stage);assert.equal(g.patience,100);}
 });
+function dive(g,target){
+  // Navigate around visible urchins on a 10px grid, then touch the treasure.
+  const start={x:Math.round(g.player.x/10)*10,y:150},goal={x:Math.round(target.x/10)*10,y:Math.round(target.y/10)*10};
+  const key=p=>p.x+','+p.y,queue=[{p:start,route:[]}],seen=new Set([key(start)]);let path=null;
+  for(let at=0;at<queue.length;at++){const {p,route}=queue[at];if(key(p)===key(goal)){path=route;break;}for(const [dx,dy]of[[0,10],[10,0],[-10,0],[0,-10]]){const q={x:p.x+dx,y:p.y+dy};if(q.x<30||q.x>g.width-30||q.y<140||q.y>460||seen.has(key(q))||g.urchins.some(u=>Math.hypot(q.x-u.x,q.y-u.y)<38))continue;seen.add(key(q));queue.push({p:q,route:[...route,q]});}}
+  assert.ok(path,'safe dive route');move(g,start.x,start.y);for(const p of path)move(g,p.x,p.y);move(g,target.x,target.y);
+  // Retrace the known safe path to the surface.
+  for(const p of path.reverse())move(g,p.x,p.y);move(g,start.x,145);
+}
 test('diver surfaces to breathe, collects all memories and returns to the boat',()=>{
-  for(let stage=1;stage<=12;stage++){const g=createGame('breathe',{stage});
-    for(const p of g.treasures){move(g,g.player.x,145);move(g,p.x,145);move(g,p.x,p.y);move(g,p.x,145);}
+  for(let stage=1;stage<=24;stage++){const g=createGame('breathe',{stage});
+    for(const p of g.treasures){move(g,g.player.x,145);move(g,p.x,145);dive(g,p);move(g,p.x,145);}
     move(g,90,145);assert.ok(g.won,'diver '+stage);assert.equal(g.lives,3);
   }
 });
@@ -68,7 +77,7 @@ test('Cairo destinations require real collection before the hotel opens',()=>{
   const g=createGame('cairo',{stage:1});move(g,52,475);move(g,290,475);move(g,290,440);assert.equal(g.visited,1);assert.equal(g.won,false);
 });
 test('all Cairo routes can be crossed safely through visible traffic gaps',()=>{
-  for(let stage=1;stage<=12;stage++){
+  for(let stage=1;stage<=24;stage++){
     const g=createGame('cairo',{stage});move(g,52,475);move(g,290,475);move(g,290,440);move(g,290,405);
     while(g.cars[0].x>=160&&g.cars[0].x<=340&&!g.done)advance(g,.02);
     move(g,290,278);g.action('Space');move(g,55,278);move(g,55,265);
@@ -79,7 +88,7 @@ test('all Cairo routes can be crossed safely through visible traffic gaps',()=>{
   }
 });
 test('all bus routes can collect a ticket and clear hazards with real lane/jump/slide controls',()=>{
-  for(let stage=1;stage<=12;stage++){
+  for(let stage=1;stage<=24;stage++){
     const g=createGame('bus',{stage});
     for(let n=0;n<6000&&!g.done;n++){
       const close=g.items.filter(o=>!o.used&&o.y>350&&o.y<460);

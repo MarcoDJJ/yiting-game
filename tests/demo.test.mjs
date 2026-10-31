@@ -10,10 +10,10 @@ test('demo opens every minigame without completing levels or granting currency',
     assert.equal(chapterUnlocked(state,c),!c.finale);
     assert.equal(stageUnlocked(state,c,1),!c.finale);
     if(!c.finale){
-      assert.equal(stageUnlocked(state,c,2),false);
+      assert.equal(stageUnlocked(state,c,2),c.world==='egypt');
       const view=createViews(state).levels(c.id);
       assert.match(view,new RegExp('data-play="'+c.id+':1"  aria-label'));
-      assert.match(view,new RegExp('data-play="'+c.id+':2" disabled'));
+      assert.match(view,new RegExp('data-play="'+c.id+':2" '+(c.world==='egypt'?' aria-label':'disabled')));
       assert.match(createViews(state).world(c.world),new RegExp('data-go="levels/'+c.id+'" >'));
     }
   }

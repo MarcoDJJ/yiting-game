@@ -1,10 +1,10 @@
 # Yiting’s Passport · Our Little World
 
-A personal, mobile-first travel game for Yiting and Marco. Playable chapters: **Egypt and Italia**, version 0.3.
+A personal, mobile-first travel game for Yiting and Marco. Playable chapters: **Egypt and Italia**, version 0.4.
 
 ## What is playable
 
-**Temporary demo:** `DEMO_UNLOCK_MINIGAMES = true` in `lib/content.js` opens all 17 minigames immediately, including their first stages. Later stages and finales retain normal progression. No scores, stars, coins or purchases are fabricated. To restore release progression, set that flag to `false`, bump the cache name in `sw.js`, and deploy. Actual demo play remains saved; test with a fresh passport if a completely fresh start is needed.
+**Temporary demo:** `DEMO_UNLOCK_MINIGAMES = true` in `lib/content.js` opens all 17 minigames immediately, plus all 24 stages of every Egypt minigame. Italy stages and both finales retain normal progression. No scores, stars, coins or purchases are fabricated. To restore release progression, set that flag to `false`, bump the cache name in `sw.js`, and deploy. Actual demo play remains saved; test with a fresh passport if a completely fresh start is needed.
 
 Italia has nine different games, each with twelve stages (108 stages), plus an Italian Date Night ending:
 
@@ -31,7 +31,7 @@ Egypt has eight different games, twelve stages each, and a sunset postcard endin
 8. Homebound Crew, meal-and-drink orders, passenger patience and turbulence.
 9. Our First Adventure, the Egypt passport stamp and postcard.
 
-There are **206 stages/variations including both endings**: 109 in Italia and 97 in Egypt. Finish stage 1 to open the next game in the same world. Each game’s later stages unlock in sequence. The two worlds start independently; existing Italy progress, purchases and settings remain compatible. Best scores, stars, local progress, cosmetic purchases and wardrobe are persistent. A daily challenge is replayable, with no streak pressure. Coins come from first clears and improved stars, never real money. Berlin, Taiwan, Tokyo and Okinawa remain explicitly marked **Coming soon**.
+There are **302 stages/variations including both endings**: 109 in Italia and 193 in Egypt. Finish stage 1 to open the next game in the same world. In release mode, each game’s later stages unlock in sequence. Victory now leads to the next level of the same game; the level selector remains directly accessible. The two worlds start independently; existing Italy progress, purchases and settings remain compatible. Best scores, stars, local progress, cosmetic purchases and wardrobe are persistent. A daily challenge is replayable, with no streak pressure. Coins come from first clears and improved stars, never real money. Berlin, Taiwan, Tokyo and Okinawa remain explicitly marked **Coming soon**.
 
 **English, Traditional Chinese and Italian cover the entire experience**: titles, descriptions, instructions, stories, shop items, settings, dialogs, errors, live messages and canvas labels. Language is persisted in the save. The Sicilian market and pyramid puzzles are imagined adventures. The photo/comic album contains illustrated memory cards; no original personal photos or comic files are included. Marco is always clean-shaven in the original avatar and every Egypt outfit.
 
@@ -109,4 +109,10 @@ Avatar brief: consistent full-body chibi sprites based on supplied references. Y
 
 ## Scope and next milestones
 
-This is a working personal game, not a finished commercial release. 206 stages/variations and daily challenges do not guarantee months of unique authored content. Longer lifespan comes from replay mastery and genuinely new worlds. Automated tests cover progression, save compatibility, translations and successful input-driven routes through all twelve stages of all seventeen minigames, as well as incorrect actions, repeat-reward protection and cloud-save behavior. Native canvas rendering is checked as a smoke test; browser/Safari testing was unavailable in this development environment, and no iPhone playtest is claimed. Real-device touch checks, difficulty balancing, private comic integration and additional authored stage layouts remain important before the gift.
+This is a working personal game, not a finished commercial release. 302 stages/variations and daily challenges do not guarantee months of unique authored content. Longer lifespan comes from replay mastery and genuinely new worlds. The 74 automated tests cover progression, save compatibility, translations, soundtrack lifecycle/races and successful input-driven routes through 12 stages of each Italian game and 24 stages of each Egyptian game. Browser checks verified soundtrack startup/mute/volume, Traditional Chinese settings, open level 24 and an actual pyramid victory followed by Next level opening level 2. No physical iPhone listening or touch playtest is claimed. Real-device balancing and private comic integration remain future work.
+
+## Soundtrack and Egypt expansion (0.4)
+
+Eight Kevin MacLeod CC BY 4.0 music loops are served locally (7.88 MB combined). Attribution, original sources and editing details appear in Settings → Music credits, `assets/music/catalog.json`, and `docs/music-credits.md`. The menu and all 17 games have assigned themes. Timed games switch to urgent music in the last 15 seconds; diving uses an air warning. Timeless puzzles keep their calm theme. Web Audio starts only after a gesture, crossfades between themes, supports volume/mute, ducks on pause/results and suspends when the page is hidden. Music is cached on demand, not downloaded as part of initial PWA installation. Up to three decoded tracks are retained in memory. The previous silent default migrates once to music enabled; subsequent mute/volume choices persist.
+
+Egypt has six difficulty groups of four stages per minigame. The pyramid has 24 reproducible chambers, 2–6 mirrors, and two stones from stage 13. Turtle boards grow from 4×4 with two pairs to 7×7 with six pairs; paths must cover all free water, preventing trivial shortcuts. Both puzzles have undo/reset and no timer. The offline authoring script `scripts/generate-puzzles.mjs` produces stable, solvable layouts; tests replay solutions through real game inputs. Cabin stages introduce a third meal at stage 9 and a third drink at stage 17. Underwater layouts vary in width, treasure count and obstacles. Road decisions, photos, traffic and bus routes increase pressure with bounded timings. Italy mechanics are unchanged in this update.

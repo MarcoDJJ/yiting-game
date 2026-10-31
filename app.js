@@ -1,11 +1,13 @@
-import {WORLDS,CHAPTERS,ITEMS,getChapter,chaptersFor,chapterUnlocked,stageUnlocked,nextLevel,completedStages} from './lib/content.js';
+import {MUSIC_CREDITS} from './lib/music-credits.js';
+import {MusicDirector,isUrgent} from './lib/music.js';
+import {WORLDS,CHAPTERS,ITEMS,getChapter,chaptersFor,chapterUnlocked,stageUnlocked,nextLevel,completedStages,completionRoute} from './lib/content.js';
 import {load,save,buy,reward,normalize,STORAGE_KEY,today} from './lib/state.js';
 import {GameRunner,loadSprites} from './lib/engine.js';
 import {translate} from './lib/i18n.js';
 import {createViews,WORLD_INFO,escape,spriteFor,marcoSpriteFor} from './lib/views.js';
 import {icon} from './lib/icons.js';
 const app=document.querySelector('#app'),modalRoot=document.querySelector('#modal-root');
-let state=load(),runner=null,shopCategory='all',session={configured:false,signedIn:false},storageKey=STORAGE_KEY,revision=0,saveQueue=Promise.resolve(),pendingSaves=0,cloudError=false,cloudDirty=false,modalClose=null,audio=null,musicTimer=null;
+let state=load(),runner=null,shopCategory='all',session={configured:false,signedIn:false},storageKey=STORAGE_KEY,revision=0,saveQueue=Promise.resolve(),pendingSaves=0,cloudError=false,cloudDirty=false,modalClose=null,audio=null;
 let welcomed=false;try{welcomed=localStorage.getItem('passport-welcome')==='1';}catch{}
 const T=(text,params={})=>translate(text,state.settings.language,params);
 const H=(text,params={})=>escape(T(text,params));
@@ -15,7 +17,10 @@ function persist(){const storage={getItem:k=>localStorage.getItem(k),setItem:(k,
 async function getSession(){try{const response=await api('/api/session',{cache:'no-store'});if(!response.ok||!response.headers.get('content-type')?.includes('application/json'))throw new Error('Unavailable');session=await response.json();if(session.signedIn)localStorage.setItem('passport-cloud-owner',session.user);else localStorage.removeItem('passport-cloud-owner');}catch{const owner=localStorage.getItem('passport-cloud-owner');if(['yiting','marco'].includes(owner)){session={configured:true,signedIn:true,user:owner};cloudError=true;}}return session;}
 async function connectCloud(user,code){const r=await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user,code})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Could not connect');session={configured:true,signedIn:true,user:data.user};storageKey=`${STORAGE_KEY}:cloud:${data.user}`;localStorage.setItem('passport-cloud-owner',data.user);revision=data.revision;cloudError=false;if(data.state){const dirty=localStorage.getItem(`${storageKey}:dirty`)==='1';if(dirty){state=normalize(JSON.parse(localStorage.getItem(storageKey)));cloudError=true;closeModal();render();toast('Unsynced device progress kept. Reconnect to choose your latest save.');return;}state=normalize(data.state);localStorage.setItem(storageKey,JSON.stringify(state));closeModal();render();toast('Your cloud passport is open.');}else{state=load();persist();closeModal();render();toast('Your passport is connected. Local progress uploaded.');}}
 function playNote(freq=550,len=.1){if(!state.settings.sound)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),g=audio.createGain();osc.type='sine';osc.frequency.value=freq;g.gain.setValueAtTime(.025,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+len);osc.connect(g);g.connect(audio.destination);osc.start();osc.stop(audio.currentTime+len);}catch{}}
-function startMusic(){clearInterval(musicTimer);musicTimer=null;if(!state.settings.music)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();audio.resume();let step=0;const notes=[261.63,329.63,392,329.63,293.66,349.23,440,349.23];musicTimer=setInterval(()=>{if(document.hidden)return;const osc=audio.createOscillator(),g=audio.createGain();osc.type='sine';osc.frequency.value=notes[step++%notes.length];g.gain.setValueAtTime(.013,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.7);osc.connect(g);g.connect(audio.destination);osc.start();osc.stop(audio.currentTime+.8);},700);}catch{}}
+const music=new MusicDirector({onStatus:status=>{const el=document.querySelector('#soundtrack-status');if(el)el.textContent=T(status.error?'Music could not load. Tap the music button to retry.':!status.enabled?'Music is off':status.playing?'Now playing: {track}':'Music starts after your first tap',{track:MUSIC_CREDITS.find(t=>t.id===status.track)?.title||''});}});
+function syncMusic(){music.configure(state.settings);}
+function musicButtons(){document.querySelectorAll('[data-music]').forEach(b=>{b.setAttribute('aria-label',T(state.settings.music?'Mute music':'Enable music'));b.setAttribute('aria-pressed',String(state.settings.music));b.textContent=state.settings.music?'♫':'♪';});document.querySelector('[data-setting="music"]')?.setAttribute('aria-checked',String(state.settings.music));}
+function toggleMusic(){state.settings.music=!state.settings.music;persist();syncMusic();music.unlock();musicButtons();}
 function updateSaveBadge(){
   const el=document.querySelector('.save-badge');if(el)el.textContent=T(!navigator.onLine?'Offline · saved locally':session.signedIn?(cloudError?'Cloud sync paused':cloudDirty?'Syncing…':'Cloud connected'):'Saved on this device');
   const counter=document.querySelector('[data-coins]');if(counter)counter.textContent=state.coins.toLocaleString();
@@ -34,14 +39,14 @@ function render(){
   else if(parts[0]==='finale')content=views.finale(WORLD_INFO[parts[1]]?parts[1]:'italy');
   else content=views.journey();
   app.innerHTML=views.shell(route,content);document.body.classList.toggle('is-playing',parts[0]==='play');document.body.classList.toggle('reduce-motion',state.settings.reducedMotion);document.documentElement.lang=state.settings.language;document.title=T('Yiting’s Passport')+' · '+T('Our little world');updateSaveBadge();
-  if(parts[0]==='play')prepareGame(parts[1],Number(parts[2]),parts[3]==='daily');window.scrollTo({top:0,behavior:'instant'});
+  syncMusic();music.scene(route);if(parts[0]==='play')prepareGame(parts[1],Number(parts[2]),parts[3]==='daily');window.scrollTo({top:0,behavior:'instant'});
 }
 function prepareGame(id,stage,daily){
   const canvas=document.querySelector('#game-canvas'),config={stage,sprite:spriteFor(state),marcoSprite:marcoSpriteFor(state),accessories:[...state.accessories],marcoOutfit:state.marcoOutfit,language:state.settings.language,reducedMotion:state.settings.reducedMotion,onFeedback:(kind)=>{playNote(kind==='hit'?180:kind==='perfect'?880:620,.07);if(kind==='hit'&&state.settings.vibration&&navigator.vibrate)navigator.vibrate(30);},seed:daily?id+':'+today():id+':'+stage};
   runner=new GameRunner(canvas,id,config,status=>{
     document.querySelector('#hud-score').textContent=status.score;document.querySelector('#hud-time').textContent=status.timeless?'—':T('{n}s',{n:status.time});
     const lives=Math.max(0,Math.min(3,status.lives));document.querySelector('#hud-lives').textContent='♥ '.repeat(lives)+'♡ '.repeat(3-lives);
-    document.querySelector('#hud-progress').style.width=status.progress*100+'%';document.querySelector('#hud-message').textContent=T(status.message);if(status.paused)pauseGame();
+    document.querySelector('#hud-progress').style.width=status.progress*100+'%';document.querySelector('#hud-message').textContent=T(status.message);music.urgency(isUrgent(status));if(status.paused)pauseGame();
   },result=>finishGame(id,stage,daily,result));
 }
 function showModal(content,closable=true,onClose=null){
@@ -51,13 +56,14 @@ function showModal(content,closable=true,onClose=null){
 function closeModal(){modalClose?.();}
 function welcome(){showModal(`<img class="welcome-hero" src="/assets/egypt.webp" alt="${H('Illustrated travel landscape')}"><span class="eyebrow welcome-tag">${H('A little gift for Yiting')}</span><h2>${H('Your passport to our little world.')}</h2><p class="welcome-letter">${H('Some places stay with us. Some people make them home.')}</p><p>${H('Play through our adventures, collect memories and find a little piece of us in every detour.')}</p><button class="primary" data-welcome>${H('Open my passport')}${icon('passport')}</button><div class="onboarding-note">${H('Explore Egypt and Italia. Guest saves stay on this device.')}</div>`,false);}
 function pauseGame(){
-  if(!runner?.running)return;runner.pause(true);showModal(`${icon('pause')}<h2>${H('A little pause.')}</h2><p>${H('Your adventure will be right here.')}</p><button class="primary" data-resume>${H('Keep playing')}${icon('arrow')}</button><button class="text-button modal-secondary" data-exit>${H('Leave this level')}</button>`,true,()=>runner?.pause(false));
+  if(!runner?.running)return;runner.pause(true);music.pause(true);showModal(`${icon('pause')}<h2>${H('A little pause.')}</h2><p>${H('Your adventure will be right here.')}</p><button class="primary" data-resume>${H('Keep playing')}${icon('arrow')}</button><button class="text-button modal-secondary" data-exit>${H('Leave this level')}</button>`,true,()=>{runner?.pause(false);music.pause(false);});
 }
 function finishGame(id,stage,daily,result){
   playNote(result.won?660:240,.22);if(state.settings.vibration&&navigator.vibrate)navigator.vibrate(40);const c=getChapter(id),list=chaptersFor(c.world),nextGame=list[list.indexOf(c)+1];let earned=0;
+  music.urgency(false);music.pause(true);if(result.won&&!daily&&stage<c.stages)state.lastPlayed={chapter:id,stage:stage+1};
   if(result.won){earned=reward(state,daily?'daily:'+today():id+':'+stage,result.score,result.stars);persist();}
-  const next=stage===1&&nextGame?(nextGame.finale?'finale/'+c.world:'levels/'+nextGame.id):stage<c.stages?'play/'+id+'/'+(stage+1):nextGame?(nextGame.finale?'finale/'+c.world:'levels/'+nextGame.id):'world/'+c.world;
-  showModal(`${result.won?`<div class="results-stars">${'★'.repeat(result.stars)+'☆'.repeat(3-result.stars)}</div>`:icon(c.icon)}<h2>${H(result.won?'A little victory!':'One more little try?')}</h2><p>${H(result.won?c.memory:'No coins lost. No waiting for lives. Try again whenever you like.')}</p><div class="result-stat">${result.score}</div><p>${result.won?H('+{n} Memory Coins',{n:earned}):H('A scenic detour, not the end of the road.')}</p>${result.won&&earned===0?`<p>${H('Improve your stars for a bonus.')}</p>`:''}<div class="result-actions"><button class="secondary" data-retry="${id}:${stage}:${daily}">${H('Play again')}</button><button class="primary" data-go="${result.won&&!daily?next:daily?'journey':'levels/'+id}">${H(result.won&&!daily?(stage===1&&nextGame?'Next game':'Next level'):'Back')}${icon('arrow')}</button></div>`,false);
+  const next=completionRoute(c,stage);
+  showModal(`${result.won?`<div class="results-stars">${'★'.repeat(result.stars)+'☆'.repeat(3-result.stars)}</div>`:icon(c.icon)}<h2>${H(result.won?'A little victory!':'One more little try?')}</h2><p>${H(result.won?c.memory:'No coins lost. No waiting for lives. Try again whenever you like.')}</p><div class="result-stat">${result.score}</div><p>${result.won?H('+{n} Memory Coins',{n:earned}):H('A scenic detour, not the end of the road.')}</p>${result.won&&earned===0?`<p>${H('Improve your stars for a bonus.')}</p>`:''}<div class="result-actions"><button class="secondary" data-retry="${id}:${stage}:${daily}">${H('Play again')}</button><button class="primary" data-go="${result.won&&!daily?next:daily?'journey':'levels/'+id}">${H(result.won&&!daily?(stage<c.stages?'Next level':'Next game'):'Back')}${icon('arrow')}</button></div><button class="text-button modal-secondary" data-go="levels/${id}">${H('All levels')}</button>`,false);
 }
 async function showAuth(){
   await saveQueue;
@@ -76,20 +82,21 @@ function openPostcard(id){
 }
 app.addEventListener('click',e=>{
   const el=e.target.closest('button');if(!el)return;
-  if(el.dataset.go)navigate(el.dataset.go);
+  if(el.hasAttribute('data-music'))toggleMusic();
+  else if(el.dataset.go)navigate(el.dataset.go);
   else if(el.dataset.continue){const last=state.lastPlayed,c=last&&getChapter(last.chapter);const next=c&&!state.scores[c.id+':'+last.stage]&&stageUnlocked(state,c,last.stage)?{chapter:c,stage:last.stage}:nextLevel(state,el.dataset.continue);navigate(next.chapter.finale?'finale/'+next.chapter.world:'play/'+next.chapter.id+'/'+next.stage);}
   else if(el.dataset.world){const w=WORLDS.find(w=>w.id===el.dataset.world);if(!w)return;if(w.available)navigate('world/'+w.id);else showModal(`<div class="modal-icon">${icon(w.icon)}</div><h2>${H(w.name)}</h2><p>${H(w.note)}</p><p>${H('This journey is still being made. Explore Egypt or Italia while we prepare the next chapter.')}</p><button class="primary" data-go="world/egypt">${H('Visit Egypt')}${icon('arrow')}</button>`);}
   else if(el.dataset.play){const[id,n]=el.dataset.play.split(':');navigate('play/'+id+'/'+n);}
-  else if(el.hasAttribute('data-start')&&runner){if(!currentRoute().endsWith('/daily'))state.lastPlayed={chapter:runner.mode,stage:runner.config.stage};persist();document.querySelector('#game-overlay').classList.add('hidden');playNote();if(state.settings.music&&!musicTimer)startMusic();runner.start();}
+  else if(el.hasAttribute('data-start')&&runner){if(!currentRoute().endsWith('/daily'))state.lastPlayed={chapter:runner.mode,stage:runner.config.stage};persist();document.querySelector('#game-overlay').classList.add('hidden');playNote();music.pause(false);runner.start();}
   else if(el.hasAttribute('data-pause'))pauseGame();
   else if(el.dataset.filter){shopCategory=el.dataset.filter;render();}
   else if(el.dataset.buy){const result=buy(state,el.dataset.buy);if(result.ok){persist();playNote(750);toast('Packed into your suitcase!');render();}else toast(result.reason);}
   else if(el.dataset.equip){const id=el.dataset.equip,item=ITEMS.find(i=>i.id===id);if(!item||!state.owned.includes(id))return;if(item.category==='outfit')state.outfit=id;else if(item.category==='accessory')state.accessories=state.accessories.includes(id)?state.accessories.filter(a=>a!==id):[...state.accessories.slice(-2),id];else if(item.category==='marco')state.marcoOutfit=state.marcoOutfit===id?null:id;persist();render();}
-  else if(el.dataset.setting){const key=el.dataset.setting;state.settings[key]=!state.settings[key];persist();if(key==='music')startMusic();render();}
+  else if(el.dataset.setting){const key=el.dataset.setting;state.settings[key]=!state.settings[key];persist();if(key==='music'){syncMusic();music.unlock();}render();}
   else if(el.hasAttribute('data-auth'))showAuth();
   else if(el.hasAttribute('data-export')){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='yiting-passport-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
   else if(el.hasAttribute('data-import'))document.querySelector('#import-file').click();
-  else if(el.hasAttribute('data-daily')){const choices=CHAPTERS.filter(c=>!c.finale&&chapterUnlocked(state,c)),index=Math.floor(Date.now()/86400000)%choices.length,c=choices[index];navigate('play/'+c.id+'/'+Math.min(12,3+Math.floor(completedStages(state)/8))+'/daily');}
+  else if(el.hasAttribute('data-daily')){const choices=CHAPTERS.filter(c=>!c.finale&&chapterUnlocked(state,c)),index=Math.floor(Date.now()/86400000)%choices.length,c=choices[index];navigate('play/'+c.id+'/'+Math.min(c.stages,3+Math.floor(completedStages(state)/8))+'/daily');}
   else if(el.dataset.date)openPostcard(el.dataset.date);
 });
 modalRoot.addEventListener('click',async e=>{
@@ -101,6 +108,11 @@ modalRoot.addEventListener('click',async e=>{
   else if(el.dataset.retry){const[id,n,daily]=el.dataset.retry.split(':');navigate('play/'+id+'/'+n+(daily==='true'?'/daily':''));}
   else if(el.hasAttribute('data-signout')){await saveQueue;if(cloudError){toast('Cloud sync is paused. Export a backup before signing out.');return;}try{const r=await api('/api/logout',{method:'POST'});if(!r.ok)throw new Error();session={configured:true,signedIn:false};localStorage.removeItem('passport-cloud-owner');storageKey=STORAGE_KEY;state=load();cloudError=false;cloudDirty=false;closeModal();render();}catch{toast('Could not sign out. Please try again.');}}
 });
+document.addEventListener('pointerdown',()=>music.unlock(),{capture:true});
+document.addEventListener('keydown',()=>music.unlock(),{capture:true});
+document.addEventListener('visibilitychange',()=>music.visibility(document.hidden));
+app.addEventListener('input',e=>{if(e.target.id==='music-volume'){state.settings.musicVolume=Number(e.target.value)/100;syncMusic();document.querySelector('#music-volume-value').textContent=e.target.value+'%';}});
+app.addEventListener('change',e=>{if(e.target.id==='music-volume')persist();});
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-control]');if(b&&runner){e.preventDefault();b.setPointerCapture(e.pointerId);runner.control(b.dataset.control,true);}});
 document.addEventListener('pointercancel',e=>{const b=e.target.closest('[data-control]');if(b&&runner)runner.control(b.dataset.control,false);});
 document.addEventListener('pointerup',e=>{const b=e.target.closest('[data-control]');if(b&&runner)runner.control(b.dataset.control,false);});

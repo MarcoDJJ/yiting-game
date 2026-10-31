@@ -18,3 +18,11 @@
 @media(max-height:650px){.game-overlay{padding:14px;gap:8px}.tutorial-steps{gap:8px;margin:2px 0}.game-overlay h2{font-size:23px}}
 
 @media(max-width:700px){.is-playing .dpad .control-button{height:44px;min-width:44px;width:44px}.controls-castle,.controls-cairo,.controls-breathe{height:96px}.is-playing:has(.dpad) .canvas-wrap{max-width:min(100%,calc((100dvh - 285px)*.667))}}
+
+/* Soundtrack and progressive chapter selector */
+.music-button{font-size:24px;color:#326d66;flex-shrink:0}.music-button[aria-pressed="false"]{color:#9c8b7b;opacity:.7}
+.level-tier{grid-column:1/-1;display:flex;align-items:center;gap:12px;font-size:17px;margin:22px 0 0}.level-tier span{color:#a77348;font-size:12px;letter-spacing:2px}.level-tier:first-child{margin-top:0}
+.puzzle-actions{display:flex;flex-direction:column;gap:7px}.puzzle-actions button{min-height:42px;padding:8px 12px}
+.volume-control{display:flex;align-items:center;gap:10px;max-width:48%}.volume-control input{width:140px;max-width:80%;accent-color:#3c8177}.volume-control output{min-width:36px;font-size:13px}
+.music-credits{margin:24px 0;padding:20px;border:1px solid #d8cdbb;border-radius:15px;background:#fbf5e9;font-size:13px;line-height:1.7}.music-credits summary{cursor:pointer;font-size:16px;font-weight:600}.music-credits a{color:#326d66}.music-credits li{margin:6px 0}
+@media(max-width:420px){.top-actions{gap:5px}.topbar .avatar-small{display:none}.music-button{width:36px;min-width:36px}.game-title{min-width:0}.game-title h2{font-size:18px}}
